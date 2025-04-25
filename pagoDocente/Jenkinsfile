@@ -1,37 +1,45 @@
 pipeline {
-    agent any  // Ejecutar en cualquier nodo disponible de Jenkins
+    agent any
 
     stages {
+        stage('Compilar') {
+            steps {
+                script {
+                    echo '🔨 Compilando el proyecto...'
+                    sh 'mvn clean compile'
+                }
+            }
+        }
+
         stage('Ejecutar Pruebas') {
             steps {
                 script {
-                    echo 'Ejecutando pruebas...'
-                    // Ejecutar las pruebas con unittest
-                    sh 'python -m unittest test/test_contrato.py'
+                    echo '🧪 Ejecutando pruebas unitarias...'
+                    sh 'mvn test'
                 }
-         }
+            }
         }
 
-        stage('Resultados') {
+        stage('Publicar Resultados') {
             steps {
                 script {
-                    echo 'Generando resultados...'
-                    // Archivar el archivo result.xml como un artefacto para poder visualizarlo
-                    archiveArtifacts artifacts: 'result.xml', allowEmptyArchive: true
+                    echo '📦 Archivando resultados de pruebas...'
+                    junit 'target/surefire-reports/*.xml'  // Ruta por defecto para JUnit en Maven
+                    archiveArtifacts artifacts: 'target/surefire-reports/*.xml', allowEmptyArchive: true
                 }
             }
         }
     }
-    //define acciones a ejecutar al final del pipeline.
+
     post {
         always {
-            echo 'Pipeline ejecutado con éxito.'
+            echo '✅ Pipeline ejecutado.'
         }
         success {
-            echo 'Las pruebas fueron exitosas.'
+            echo '🎉 Todas las pruebas fueron exitosas.'
         }
         failure {
-            echo 'Hubo un error en el pipeline.'
-        }
-    }
+            echo '❌ Hubo fallos en alguna etapa del pipeline.'
+        }
+    }
 }
